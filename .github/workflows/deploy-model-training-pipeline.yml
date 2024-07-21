@@ -54,24 +54,14 @@ jobs:
 
   register-dataset:
     needs: get-config
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v2
-
-      - name: Install Azure CLI and ML extension
-        run: |
-          curl -sL https://aka.ms/InstallAzureCLIDeb | sudo bash
-          az extension add --name ml
-
-      - name: Log in to Azure
-        uses: azure/login@v1
-        with:
-          creds: ${{ secrets.AZURE_CREDENTIALS }}
-
-      - name: Register dataset
-        run: |
-          az ml dataset create --name spam-data --path data/spam.csv --workspace-name ${{ needs.get-config.outputs.aml_workspace }} --resource-group ${{ needs.get-config.outputs.resource_group }}
+    uses: Azure/mlops-templates/.github/workflows/register-dataset.yml@main
+    with:
+      resource_group: ${{ needs.get-config.outputs.resource_group }}
+      workspace_name: ${{ needs.get-config.outputs.aml_workspace }}
+      name: spam-data
+      data_file: mlops/azureml/train/data.yml
+    secrets:
+      creds: ${{ secrets.AZURE_CREDENTIALS }}
 
   verify-compute:
     needs: [get-config, register-environment, register-dataset]
