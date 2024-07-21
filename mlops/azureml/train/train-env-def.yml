@@ -1,0 +1,4 @@
+name: spam-detection-env
+version: 1
+description: Environment for spam detection model
+conda_file: train-conda.yml
