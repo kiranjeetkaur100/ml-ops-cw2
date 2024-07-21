@@ -6,7 +6,7 @@ on:
       - main
       - mlops
   workflow_dispatch:
-
+  
 jobs:
   get-config:
     runs-on: ubuntu-latest
