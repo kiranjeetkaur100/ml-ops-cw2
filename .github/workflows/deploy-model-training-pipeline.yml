@@ -6,19 +6,30 @@ on:
       - main
       - mlops
   workflow_dispatch:
-  
+
 jobs:
   get-config:
     runs-on: ubuntu-latest
+    outputs:
+      resource_group: ${{ steps.get-config.outputs.resource_group }}
+      aml_workspace: ${{ steps.get-config.outputs.aml_workspace }}
     steps:
       - name: Checkout code
         uses: actions/checkout@v2
 
-      - name: Read config file
-        id: read-config
-        uses: Azure/read-yaml@v1
+      - name: Set up Python
+        uses: actions/setup-python@v2
         with:
-          file: mlops/azureml/train/config-infra-prod.yml
+          python-version: '3.x'
+
+      - name: Install PyYAML
+        run: |
+          pip install pyyaml
+
+      - name: Read config file
+        id: get-config
+        run: |
+          python -c "import yaml; config = yaml.safe_load(open('mlops/azureml/train/config-infra-prod.yml')); print(f'::set-output name=resource_group::{config['resource_group']}'); print(f'::set-output name=aml_workspace::{config['aml_workspace']}')"
 
   register-environment:
     needs: get-config
@@ -50,7 +61,7 @@ jobs:
 
       - name: Register dataset
         run: |
-          az ml dataset create --name spam-data --path data/spam.csv --workspace-name ${{ steps.read-config.outputs.aml_workspace }}
+          az ml dataset create --name spam-data --path data/spam.csv --workspace-name ${{ needs.get-config.outputs.aml_workspace }}
 
   verify-compute:
     needs: [get-config, register-environment, register-dataset]
@@ -82,7 +93,7 @@ jobs:
       - name: Verify Compute Cluster
         run: |
           echo "Verifying pre-created compute cluster: cpu-cluster"
-          az ml compute show --name cpu-cluster --resource-group ${{ steps.read-config.outputs.resource_group }} --workspace-name ${{ steps.read-config.outputs.aml_workspace }}
+          az ml compute show --name cpu-cluster --resource-group ${{ needs.get-config.outputs.resource_group }} --workspace-name ${{ needs.get-config.outputs.aml_workspace }}
 
   run-pipeline:
     needs: [get-config, register-environment, verify-compute, register-dataset]
@@ -98,4 +109,4 @@ jobs:
 
       - name: Run pipeline
         run: |
-          az ml pipeline run --file mlops/azureml/train/pipeline.yml --workspace-name ${{ steps.read-config.outputs.aml_workspace }} --experiment-name spam-detection
+          az ml pipeline run --file mlops/azureml/train/pipeline.yml --workspace-name ${{ needs.get-config.outputs.aml_workspace }} --experiment-name spam-detection

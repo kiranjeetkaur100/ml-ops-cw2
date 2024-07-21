@@ -1,0 +1,2 @@
+resource_group: mlops-spam-detection-rg
+aml_workspace: mlops-spam-detection-ws
