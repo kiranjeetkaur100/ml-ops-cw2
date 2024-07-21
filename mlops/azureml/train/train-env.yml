@@ -1,0 +1,9 @@
+# mlops/azureml/train/train-env.yml
+name: spam-detection-env
+dependencies:
+  - python=3.8
+  - scikit-learn
+  - pandas
+  - joblib
+  - pip:
+    - azureml-sdk

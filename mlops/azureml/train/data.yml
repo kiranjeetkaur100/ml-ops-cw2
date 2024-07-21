@@ -1,0 +1,5 @@
+# mlops/azureml/train/data.yml
+name: spam-data
+version: 1
+description: "Spam data for training the spam detection model"
+path: data/spam.csv

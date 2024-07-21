@@ -1,0 +1,12 @@
+# data-science/environment/train-conda.yml
+name: spam-detection-env
+channels:
+  - defaults
+dependencies:
+  - python=3.8
+  - scikit-learn
+  - pandas
+  - joblib
+  - pip
+  - pip:
+    - azureml-sdk

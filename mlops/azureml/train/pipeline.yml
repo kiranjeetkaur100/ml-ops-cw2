@@ -1,0 +1,9 @@
+# mlops/azureml/train/pipeline.yml
+steps:
+  - name: TrainSpamModel
+    script: train.py
+    compute: cpu-cluster
+    environment: spam-detection-env
+    arguments:
+      - --data_path
+      - data/spam.csv

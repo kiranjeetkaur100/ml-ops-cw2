@@ -1,0 +1,101 @@
+name: deploy-model-training-pipeline
+
+on:
+  push:
+    branches:
+      - main
+      - mlops
+  workflow_dispatch:
+
+jobs:
+  get-config:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Read config file
+        id: read-config
+        uses: Azure/read-yaml@v1
+        with:
+          file: mlops/azureml/train/config-infra-prod.yml
+
+  register-environment:
+    needs: get-config
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Log in to Azure
+        uses: azure/login@v1
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+
+      - name: Register environment
+        run: |
+          az ml environment create --file mlops/azureml/train/train-env.yml
+
+  register-dataset:
+    needs: get-config
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Log in to Azure
+        uses: azure/login@v1
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+
+      - name: Register dataset
+        run: |
+          az ml dataset create --name spam-data --path data/spam.csv --workspace-name ${{ steps.read-config.outputs.aml_workspace }}
+
+  verify-compute:
+    needs: [get-config, register-environment, register-dataset]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Set up Python
+        uses: actions/setup-python@v2
+        with:
+          python-version: '3.x'
+
+      - name: Install Azure CLI
+        run: |
+          curl -sL https://aka.ms/InstallAzureCLIDeb | sudo bash
+          az --version
+
+      - name: Install Azure ML extension
+        run: |
+          az extension add --name ml
+          az extension list
+
+      - name: Log in to Azure
+        uses: azure/login@v1
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+
+      - name: Verify Compute Cluster
+        run: |
+          echo "Verifying pre-created compute cluster: cpu-cluster"
+          az ml compute show --name cpu-cluster --resource-group ${{ steps.read-config.outputs.resource_group }} --workspace-name ${{ steps.read-config.outputs.aml_workspace }}
+
+  run-pipeline:
+    needs: [get-config, register-environment, verify-compute, register-dataset]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Log in to Azure
+        uses: azure/login@v1
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+
+      - name: Run pipeline
+        run: |
+          az ml pipeline run --file mlops/azureml/train/pipeline.yml --workspace-name ${{ steps.read-config.outputs.aml_workspace }} --experiment-name spam-detection
