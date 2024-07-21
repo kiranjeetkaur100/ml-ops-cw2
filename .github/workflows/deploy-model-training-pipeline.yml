@@ -4,7 +4,7 @@ on:
   push:
     branches:
       - main
-      - Feature/MLAssignment
+      - mlops
   workflow_dispatch:
 
 jobs:
@@ -38,6 +38,11 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v2
 
+      - name: Install Azure CLI and ML extension
+        run: |
+          curl -sL https://aka.ms/InstallAzureCLIDeb | sudo bash
+          az extension add --name ml
+
       - name: Log in to Azure
         uses: azure/login@v1
         with:
@@ -53,6 +58,11 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v2
+
+      - name: Install Azure CLI and ML extension
+        run: |
+          curl -sL https://aka.ms/InstallAzureCLIDeb | sudo bash
+          az extension add --name ml
 
       - name: Log in to Azure
         uses: azure/login@v1
@@ -70,20 +80,10 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v2
 
-      - name: Set up Python
-        uses: actions/setup-python@v2
-        with:
-          python-version: '3.x'
-
-      - name: Install Azure CLI
+      - name: Install Azure CLI and ML extension
         run: |
           curl -sL https://aka.ms/InstallAzureCLIDeb | sudo bash
-          az --version
-
-      - name: Install Azure ML extension
-        run: |
           az extension add --name ml
-          az extension list
 
       - name: Log in to Azure
         uses: azure/login@v1
@@ -101,6 +101,11 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v2
+
+      - name: Install Azure CLI and ML extension
+        run: |
+          curl -sL https://aka.ms/InstallAzureCLIDeb | sudo bash
+          az extension add --name ml
 
       - name: Log in to Azure
         uses: azure/login@v1
