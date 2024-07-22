@@ -50,7 +50,7 @@ jobs:
 
       - name: Register environment
         run: |
-          az ml environment create --file mlops/azureml/train/train-env-def.yml --conda-file mlops/azureml/train/train-conda.yml --workspace-name ${{ needs.get-config.outputs.aml_workspace }} --resource-group ${{ needs.get-config.outputs.resource_group }}
+          az ml environment create --file mlops/azureml/train/train-env-def.yml --conda-file data-science/environment/train-conda.yml --workspace-name ${{ needs.get-config.outputs.aml_workspace }} --resource-group ${{ needs.get-config.outputs.resource_group }}
 
   register-dataset:
     needs: get-config
