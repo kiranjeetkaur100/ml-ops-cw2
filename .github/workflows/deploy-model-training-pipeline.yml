@@ -3,14 +3,14 @@ name: deploy-model-training-pipeline
 on:
   push:
     branches:
-      - mlops
+      - Feature/MLAssignment  # Specify the branches that should trigger the workflow on push
   workflow_dispatch:
 
 jobs:
   get-config:
     uses: Azure/mlops-templates/.github/workflows/read-yaml.yml@main
     with:
-      file_name: mlops/azureml/train/config-infra-prod.yml
+      file_name: config-infra-prod.yml
 
   register-environment:
     needs: get-config
@@ -18,8 +18,8 @@ jobs:
     with:
       resource_group: ${{ needs.get-config.outputs.resource_group }}
       workspace_name: ${{ needs.get-config.outputs.aml_workspace }}     
-      environment_file: mlops/azureml/train/train-env-def.yml
-      conda_file: mlops/azureml/train/train-conda.yml
+      environment_file: mlops/azureml/train/train-env.yml
+      conda_file: data-science/environment/train-conda.yml
     secrets:
       creds: ${{ secrets.AZURE_CREDENTIALS }}
           
