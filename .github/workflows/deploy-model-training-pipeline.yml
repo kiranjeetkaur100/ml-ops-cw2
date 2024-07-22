@@ -3,7 +3,7 @@ name: deploy-model-training-pipeline
 on:
   push:
     branches:
-      - Feature/MLAssignment
+      - mlops
   workflow_dispatch:
 
 jobs:
