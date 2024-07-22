@@ -1,2 +1,6 @@
-resource_group: mlops-spam-detection-rg
-aml_workspace: mlops-spam-detection-ws
+$schema: https://azuremlschemas.azureedge.net/latest/environment.schema.json
+name: spam-detection-env
+version: 1
+description: Environment for spam detection model
+dependencies:
+  - conda_file: mlops/azureml/train/train-conda.yml

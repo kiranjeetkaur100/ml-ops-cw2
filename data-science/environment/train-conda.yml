@@ -1,4 +1,3 @@
-name: spam-detection-env
 channels:
   - defaults
   - anaconda

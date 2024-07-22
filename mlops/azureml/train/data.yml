@@ -1,5 +1,5 @@
-# mlops/azureml/train/data.yml
+$schema: https://azuremlschemas.azureedge.net/latest/data.schema.json
+type: uri_file
 name: spam-data
-version: 1
-description: "Spam data for training the spam detection model"
-path: data/spam.csv
+description: Spam dataset for training
+path: azureml://datastores/workspaceblobstore/paths/data/spam.csv

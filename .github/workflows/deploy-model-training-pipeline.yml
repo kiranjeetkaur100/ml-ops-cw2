@@ -3,55 +3,26 @@ name: deploy-model-training-pipeline
 on:
   push:
     branches:
-      - main
-      - mlops
+      - Feature/MLAssignment
   workflow_dispatch:
 
 jobs:
   get-config:
-    runs-on: ubuntu-latest
-    outputs:
-      resource_group: ${{ steps.get-config.outputs.resource_group }}
-      aml_workspace: ${{ steps.get-config.outputs.aml_workspace }}
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v2
-
-      - name: Set up Python
-        uses: actions/setup-python@v2
-        with:
-          python-version: '3.x'
-
-      - name: Install PyYAML
-        run: |
-          pip install pyyaml
-
-      - name: Read config file
-        id: get-config
-        run: |
-          python -c "import yaml; config = yaml.safe_load(open('mlops/azureml/train/config-infra-prod.yml')); print(f'::set-output name=resource_group::{config['resource_group']}'); print(f'::set-output name=aml_workspace::{config['aml_workspace']}')"
+    uses: Azure/mlops-templates/.github/workflows/read-yaml.yml@main
+    with:
+      file_name: mlops/azureml/train/config-infra-prod.yml
 
   register-environment:
     needs: get-config
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v2
-
-      - name: Install Azure CLI and ML extension
-        run: |
-          curl -sL https://aka.ms/InstallAzureCLIDeb | sudo bash
-          az extension add --name ml
-
-      - name: Log in to Azure
-        uses: azure/login@v1
-        with:
-          creds: ${{ secrets.AZURE_CREDENTIALS }}
-
-      - name: Register environment
-        run: |
-          az ml environment create --file mlops/azureml/train/train-env-def.yml --workspace-name ${{ needs.get-config.outputs.aml_workspace }} --resource-group ${{ needs.get-config.outputs.resource_group }}
-
+    uses: Azure/mlops-templates/.github/workflows/register-environment.yml@main
+    with:
+      resource_group: ${{ needs.get-config.outputs.resource_group }}
+      workspace_name: ${{ needs.get-config.outputs.aml_workspace }}     
+      environment_file: mlops/azureml/train/train-env-def.yml
+      conda_file: mlops/azureml/train/train-conda.yml
+    secrets:
+      creds: ${{ secrets.AZURE_CREDENTIALS }}
+          
   register-dataset:
     needs: get-config
     uses: Azure/mlops-templates/.github/workflows/register-dataset.yml@main
@@ -62,7 +33,7 @@ jobs:
       data_file: mlops/azureml/train/data.yml
     secrets:
       creds: ${{ secrets.AZURE_CREDENTIALS }}
-
+      
   verify-compute:
     needs: [get-config, register-environment, register-dataset]
     runs-on: ubuntu-latest
@@ -70,10 +41,20 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v2
 
-      - name: Install Azure CLI and ML extension
+      - name: Set up Python
+        uses: actions/setup-python@v2
+        with:
+          python-version: '3.x'
+
+      - name: Install Azure CLI
         run: |
           curl -sL https://aka.ms/InstallAzureCLIDeb | sudo bash
+          az --version
+
+      - name: Install Azure ML extension
+        run: |
           az extension add --name ml
+          az extension list
 
       - name: Log in to Azure
         uses: azure/login@v1
@@ -87,21 +68,11 @@ jobs:
 
   run-pipeline:
     needs: [get-config, register-environment, verify-compute, register-dataset]
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v2
-
-      - name: Install Azure CLI and ML extension
-        run: |
-          curl -sL https://aka.ms/InstallAzureCLIDeb | sudo bash
-          az extension add --name ml
-
-      - name: Log in to Azure
-        uses: azure/login@v1
-        with:
-          creds: ${{ secrets.AZURE_CREDENTIALS }}
-
-      - name: Run pipeline
-        run: |
-          az ml pipeline run --file mlops/azureml/train/pipeline.yml --workspace-name ${{ needs.get-config.outputs.aml_workspace }} --experiment-name spam-detection
+    uses: Azure/mlops-templates/.github/workflows/run-pipeline.yml@main
+    with:
+      resource_group: ${{ needs.get-config.outputs.resource_group }}
+      workspace_name: ${{ needs.get-config.outputs.aml_workspace }}
+      parameters-file: mlops/azureml/train/pipeline.yml
+      job-name: test
+    secrets:
+      creds: ${{ secrets.AZURE_CREDENTIALS }}
