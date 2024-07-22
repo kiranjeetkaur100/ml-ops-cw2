@@ -1,9 +1,5 @@
-# mlops/azureml/train/train-env.yml
+$schema: https://azuremlschemas.azureedge.net/latest/environment.schema.json
 name: spam-detection-env
-dependencies:
-  - python=3.8
-  - scikit-learn
-  - pandas
-  - joblib
-  - pip:
-    - azureml-sdk
+image: mcr.microsoft.com/azureml/openmpi3.1.2-ubuntu18.04
+conda_file: ../../../data-science/environment/train-conda.yml
+description: Environment created from a Docker image plus Conda environment to train  model.
